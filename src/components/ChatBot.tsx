@@ -1,10 +1,10 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Send, Bot, User, Loader2, Brain } from 'lucide-react';
+import { Brain } from 'lucide-react';
 import { generateIntelligentResponse } from '@/utils/aiResponseGenerator';
+import MessageList from './MessageList';
+import ChatInput from './ChatInput';
 
 interface Message {
   id: string;
@@ -29,15 +29,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ mode = 'general' }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -97,13 +88,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ mode = 'general' }) => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto h-[600px] flex flex-col">
       <Card className="flex-1 flex flex-col">
@@ -118,108 +102,18 @@ const ChatBot: React.FC<ChatBotProps> = ({ mode = 'general' }) => {
         </CardHeader>
         
         <CardContent className="flex-1 flex flex-col p-0">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`flex gap-3 max-w-[85%] ${
-                    message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                  }`}
-                >
-                  <div className="flex-shrink-0">
-                    {message.role === 'user' ? (
-                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <Brain className="h-4 w-4 text-white animate-pulse" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div
-                    className={`rounded-lg p-3 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-gradient-to-r from-muted to-muted/70 text-foreground border border-border/50'
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                    <p className="text-xs opacity-70 mt-2">
-                      {message.timestamp.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="flex gap-3 max-w-[85%]">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <Brain className="h-4 w-4 text-white animate-pulse" />
-                  </div>
-                  <div className="rounded-lg p-3 bg-gradient-to-r from-muted to-muted/70 border border-border/50">
-                    <div className="flex items-center gap-2">
-                      {isThinking ? (
-                        <>
-                          <Brain className="h-4 w-4 animate-pulse text-blue-500" />
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm text-muted-foreground">Advanced reasoning</span>
-                            <div className="flex gap-1">
-                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
-                          <span className="text-sm text-muted-foreground">Synthesizing response...</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </div>
+          <MessageList 
+            messages={messages} 
+            isLoading={isLoading} 
+            isThinking={isThinking} 
+          />
           
-          <div className="p-4 border-t">
-            <div className="flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask me anything - I can reason, analyze, create, and solve complex problems..."
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button 
-                onClick={sendMessage} 
-                disabled={!input.trim() || isLoading}
-                size="icon"
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Powered by V1Q Advanced AI • Multi-domain reasoning • Creative problem solving
-            </p>
-          </div>
+          <ChatInput 
+            input={input}
+            setInput={setInput}
+            onSendMessage={sendMessage}
+            isLoading={isLoading}
+          />
         </CardContent>
       </Card>
     </div>
