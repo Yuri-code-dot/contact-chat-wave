@@ -42,7 +42,7 @@ const Index = () => {
                 Change Mode
               </button>
             </div>
-            <ChatBot />
+            <ChatBot mode={selectedMode.id} />
           </div>
         )}
       </div>

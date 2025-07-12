@@ -3,7 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Brain } from 'lucide-react';
+import { generateIntelligentResponse } from '@/utils/aiResponseGenerator';
 
 interface Message {
   id: string;
@@ -12,17 +13,22 @@ interface Message {
   timestamp: Date;
 }
 
-const ChatBot = () => {
+interface ChatBotProps {
+  mode?: string;
+}
+
+const ChatBot: React.FC<ChatBotProps> = ({ mode = 'general' }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: 'Hello! I\'m your AI assistant powered by V1Q. How can I help you today?',
+      content: 'Hello! I\'m your AI assistant powered by V1Q. I can understand context and provide thoughtful responses. How can I help you today?',
       role: 'assistant',
       timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -44,47 +50,46 @@ const ChatBot = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
+    setIsThinking(true);
 
     try {
-      // Simulate API call to V1Q model
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      // Simulate thinking time for more realistic AI interaction
+      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
+      
+      setIsThinking(false);
+      
+      // Generate intelligent response
+      const conversationContext = {
+        messages: [...messages, userMessage],
+        mode: mode
+      };
+      
+      const intelligentResponse = generateIntelligentResponse(currentInput, conversationContext);
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: generateResponse(input),
+        content: intelligentResponse,
         role: 'assistant',
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error generating response:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: 'I apologize, but I encountered an issue processing your request. Please try again, and I\'ll do my best to help you.',
         role: 'assistant',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setIsThinking(false);
     }
-  };
-
-  const generateResponse = (userInput: string): string => {
-    // Simple response generation for demo purposes
-    const responses = [
-      "That's an interesting question! Let me help you with that.",
-      "I understand what you're asking. Here's what I think...",
-      "Great question! Based on my knowledge, I can tell you that...",
-      "I'd be happy to help you with that. Here's my response...",
-      "That's a thoughtful inquiry. Let me provide you with some insights..."
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)] + 
-           ` Regarding "${userInput}", I'm processing this with the V1Q model to provide you with the most accurate response possible.`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -99,8 +104,8 @@ const ChatBot = () => {
       <Card className="flex-1 flex flex-col">
         <CardHeader className="border-b">
           <CardTitle className="flex items-center gap-2">
-            <Bot className="h-6 w-6 text-primary" />
-            AI Assistant (V1Q)
+            <Brain className="h-6 w-6 text-primary" />
+            AI Assistant (V1Q) - Intelligent Mode
           </CardTitle>
         </CardHeader>
         
@@ -125,7 +130,7 @@ const ChatBot = () => {
                       </div>
                     ) : (
                       <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
-                        <Bot className="h-4 w-4 text-secondary-foreground" />
+                        <Brain className="h-4 w-4 text-secondary-foreground" />
                       </div>
                     )}
                   </div>
@@ -137,7 +142,7 @@ const ChatBot = () => {
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     <p className="text-xs opacity-70 mt-1">
                       {message.timestamp.toLocaleTimeString([], {
                         hour: '2-digit',
@@ -153,12 +158,21 @@ const ChatBot = () => {
               <div className="flex gap-3 justify-start">
                 <div className="flex gap-3 max-w-[80%]">
                   <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-secondary-foreground" />
+                    <Brain className="h-4 w-4 text-secondary-foreground" />
                   </div>
                   <div className="rounded-lg p-3 bg-muted">
                     <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Thinking...</span>
+                      {isThinking ? (
+                        <>
+                          <Brain className="h-4 w-4 animate-pulse text-blue-500" />
+                          <span className="text-sm text-muted-foreground">Thinking...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm text-muted-foreground">Responding...</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
