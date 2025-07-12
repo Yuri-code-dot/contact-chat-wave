@@ -1,3 +1,4 @@
+import { processAdvancedThinking } from './advancedAiEngine';
 
 interface ConversationContext {
   messages: Array<{ content: string; role: 'user' | 'assistant' }>;
@@ -5,17 +6,19 @@ interface ConversationContext {
 }
 
 export const generateIntelligentResponse = (userInput: string, context: ConversationContext): string => {
-  const input = userInput.toLowerCase().trim();
-  const mode = context.mode;
-  const recentMessages = context.messages.slice(-3); // Consider last 3 messages for context
+  console.log('🧠 V1Q Advanced AI Processing:', userInput);
   
-  // Analyze user intent and context
-  const intent = analyzeUserIntent(input);
-  const sentiment = analyzeSentiment(input);
-  const topicContext = extractTopics(input);
+  // Use the advanced AI engine for all responses
+  const { response, thoughtProcess } = processAdvancedThinking(
+    userInput, 
+    context.messages, 
+    context.mode
+  );
   
-  // Generate contextual response based on mode and intent
-  return generateContextualResponse(input, intent, sentiment, topicContext, mode, recentMessages);
+  console.log('🎯 Thought Process:', thoughtProcess);
+  console.log('💡 Generated Response:', response);
+  
+  return response;
 };
 
 const analyzeUserIntent = (input: string): string => {
